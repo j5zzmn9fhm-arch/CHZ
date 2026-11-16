@@ -1,0 +1,10 @@
+import Foundation
+
+struct DeviceDiscoveryService {
+
+    private let rokuService = RokuIdentificationService()
+
+    func discoverRoku(at ipAddress: String) async -> DiscoveredDevice? {
+        return await rokuService.identify(ipAddress: ipAddress)
+    }
+}
