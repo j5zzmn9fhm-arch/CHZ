@@ -1,4 +1,4 @@
-# CHZ# CHZ DISCOVERY
+CHZ DISCOVERY
 
 Aplicativo para descoberta e identificação de Smart TVs.
 
