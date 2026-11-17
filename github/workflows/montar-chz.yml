@@ -1,0 +1,159 @@
+
+name: Montar CHZ
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  montar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Criar estrutura CHZ
+        run: |
+          mkdir -p roku
+
+          cat > index.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="theme-color" content="#080808">
+            <title>CHZ | Streaming</title>
+            <style>
+              *{box-sizing:border-box}
+              body{margin:0;background:#080808;color:#eee;font-family:Arial,sans-serif}
+              header{padding:25px 7%;border-bottom:1px solid #292929;display:flex;justify-content:space-between;align-items:center}
+              h1{color:#ddd;letter-spacing:5px;margin:0}
+              a{color:#aaa;text-decoration:none}
+              .hero{padding:75px 7%;background:linear-gradient(90deg,#080808,#252525);min-height:300px}
+              .hero h2{font-size:38px;margin-bottom:10px}
+              .hero p{color:#aaa}
+              main{padding:25px 7%}
+              .catalogo{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:16px}
+              .item{background:#191919;border:1px solid #333;border-radius:12px;padding:18px;min-height:110px}
+              .item h3{margin:0 0 10px}
+              .item p{color:#999;font-size:13px}
+              footer{padding:30px;color:#777;text-align:center}
+            </style>
+          </head>
+          <body>
+            <header>
+              <h1>CHZ</h1>
+              <a href="admin.html">ADMINISTRAÇÃO</a>
+            </header>
+            <section class="hero">
+              <h2>Seu entretenimento.</h2>
+              <p>Bem-vindo ao CHZ Streaming.</p>
+            </section>
+            <main>
+              <h2>Catálogo</h2>
+              <div class="catalogo" id="catalogo"></div>
+            </main>
+            <footer>CHZ Streaming</footer>
+            <script>
+              const itens = JSON.parse(localStorage.getItem('chz_catalogo') || '[]');
+              const area = document.getElementById('catalogo');
+              if (!itens.length) {
+                area.innerHTML = '<p>Seu catálogo ainda está vazio.</p>';
+              } else {
+                itens.forEach(item => {
+                  const card = document.createElement('article');
+                  card.className = 'item';
+                  const nome = document.createElement('h3');
+                  nome.textContent = item.nome;
+                  const tipo = document.createElement('p');
+                  tipo.textContent = item.tipo;
+                  card.append(nome, tipo);
+                  area.append(card);
+                });
+              }
+            </script>
+          </body>
+          </html>
+          EOF
+
+          cat > admin.html <<'EOF'
+          <!DOCTYPE html>
+          <html lang="pt-BR">
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>CHZ | Painel</title>
+            <style>
+              body{background:#090909;color:#eee;font-family:Arial;padding:25px}
+              input,select,button{display:block;width:100%;padding:14px;margin:12px 0;border-radius:8px;border:1px solid #444;background:#191919;color:white}
+              button{background:#ddd;color:#111;font-weight:bold}
+              a{color:#aaa}
+            </style>
+          </head>
+          <body>
+            <h1>CHZ — Painel administrativo</h1>
+            <p>Protótipo inicial de gerenciamento do catálogo.</p>
+            <input id="nome" placeholder="Nome do filme ou série">
+            <select id="tipo">
+              <option>Filme</option>
+              <option>Série</option>
+            </select>
+            <button onclick="adicionar()">Adicionar ao catálogo</button>
+            <h2>Itens cadastrados</h2>
+            <div id="lista"></div>
+            <p><a href="index.html">Voltar ao CHZ</a></p>
+            <script>
+              let itens = JSON.parse(localStorage.getItem('chz_catalogo') || '[]');
+              function mostrar(){
+                document.getElementById('lista').textContent =
+                  itens.map(x => x.nome + ' — ' + x.tipo).join(' | ') || 'Nenhum item cadastrado.';
+              }
+              function adicionar(){
+                const nome = document.getElementById('nome').value.trim();
+                const tipo = document.getElementById('tipo').value;
+                if(!nome){alert('Digite um nome.');return;}
+                itens.push({nome,tipo});
+                localStorage.setItem('chz_catalogo',JSON.stringify(itens));
+                document.getElementById('nome').value='';
+                mostrar();
+              }
+              mostrar();
+            </script>
+          </body>
+          </html>
+          EOF
+
+          cat > README.md <<'EOF'
+          # CHZ Streaming
+          Estrutura inicial do projeto CHZ.
+
+          ## Arquivos
+          - index.html: página inicial.
+          - admin.html: protótipo de gerenciamento local.
+          - roku/: preparação para o aplicativo Roku.
+
+          ## Importante
+          Este é um protótipo. O catálogo atual usa armazenamento
+          local do navegador e não sincroniza entre dispositivos.
+          O painel ainda não possui autenticação segura.
+          Para produção serão necessários backend, banco de dados,
+          hospedagem e conteúdo devidamente licenciado.
+          EOF
+
+          cat > roku/README.md <<'EOF'
+          # CHZ para Roku
+
+          Próxima etapa: desenvolver o aplicativo Roku com
+          SceneGraph e BrightScript e conectar a um catálogo
+          hospedado com conteúdo autorizado.
+          EOF
+
+      - name: Salvar arquivos no repositório
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html admin.html README.md roku/
+          git diff --cached --quiet || (git commit -m "Criar estrutura inicial CHZ" && git push)
